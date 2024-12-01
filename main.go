@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-    
+
 }
 
 type Service struct {
@@ -34,7 +34,7 @@ var (
 	ErrCannotQueryRepository          = errors.New("Repository cannot be queried")
 )
 
-func (s *Service) NeedsAttention() ([]*Pullrequest, error) {
+func (s *Service) NeedsAttention(ctx context.Context) ([]*Pullrequest, error) {
 	repos, _ := s.store.Repositories()
 	if len(repos) == 0 {
 		return nil, ErrNoRepositoriesProvided
@@ -50,7 +50,7 @@ func (s *Service) NeedsAttention() ([]*Pullrequest, error) {
 				return nil, ErrNoCredentialsProvidedForGithub
 			}
 		}
-		prs, err := s.provider.GetPullRequests(context.TODO(), *repo, creds[repo.Provider])
+		prs, err := s.provider.GetPullRequests(ctx, *repo, creds[repo.Provider], "main")
 		if err != nil {
 			return total, err
 		}
@@ -100,6 +100,9 @@ type Repository struct {
 }
 
 type Pullrequest struct {
+	Number   int
+	URL      string
+	Author   string
 }
 
 func (r *Repository) Equal(other *Repository) bool {

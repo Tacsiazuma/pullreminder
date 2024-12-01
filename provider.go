@@ -8,7 +8,7 @@ import (
 )
 
 type Provider interface {
-	GetPullRequests(ctx context.Context, repo Repository, token string) ([]*Pullrequest, error)
+	GetPullRequests(ctx context.Context, repo Repository, token, base string) ([]*Pullrequest, error)
 }
 
 type FakeProvider struct {
@@ -19,7 +19,7 @@ func NewFakeProvider() FakeProvider {
 	return FakeProvider{prs: make(map[string][]*Pullrequest)}
 }
 
-func (f *FakeProvider) GetPullRequests(ctx context.Context, repo Repository, token string) ([]*Pullrequest, error) {
+func (f *FakeProvider) GetPullRequests(ctx context.Context, repo Repository, token, base string) ([]*Pullrequest, error) {
 	value, success := f.prs[repo.ToString()+token]
 	if !success {
 		return nil, ErrCannotQueryRepository
@@ -38,10 +38,11 @@ func NewGithubProvider() *GithubProvider {
 	return &GithubProvider{}
 }
 
-func (f *GithubProvider) GetPullRequests(ctx context.Context, repo Repository, token string) ([]*Pullrequest, error) {
+func (f *GithubProvider) GetPullRequests(ctx context.Context, repo Repository, token, base string) ([]*Pullrequest, error) {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	client := github.NewClient(oauth2.NewClient(ctx, ts))
-	prs, _, err := client.PullRequests.List(ctx, repo.Owner, repo.Name, nil)
+	options := &github.PullRequestListOptions{Base: base}
+	prs, _, err := client.PullRequests.List(ctx, repo.Owner, repo.Name, options)
 	if err != nil {
 		return nil, ErrCannotQueryRepository
 	}
@@ -50,8 +51,11 @@ func (f *GithubProvider) GetPullRequests(ctx context.Context, repo Repository, t
 
 func mapToPR(origin []*github.PullRequest) (target []*Pullrequest) {
 	target = make([]*Pullrequest, len(origin))
-	for i := range origin {
-		target[i] = &Pullrequest{}
+	for i, pr := range origin {
+		target[i] = &Pullrequest{
+			Number: *pr.Number,
+			URL:    *pr.HTMLURL,
+		}
 	}
 	return target
 }

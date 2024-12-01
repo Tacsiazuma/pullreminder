@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,9 +12,10 @@ func TestService(t *testing.T) {
 		_ = CreateService()
 	})
 	t.Run("NeedsAttention function", func(t *testing.T) {
+        ctx := context.TODO()
 		t.Run("returns error when no repositories provided", func(t *testing.T) {
 			sut := CreateService()
-			result, err := sut.NeedsAttention()
+			result, err := sut.NeedsAttention(ctx)
 			assert.Equal(t, ErrNoRepositoriesProvided, err, "Should return error")
 			assert.Nil(t, result, "Should return nil")
 		})
@@ -21,7 +23,7 @@ func TestService(t *testing.T) {
 			sut := CreateService()
 			repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
 			_ = sut.AddRepository(repo)
-			_, err := sut.NeedsAttention()
+			_, err := sut.NeedsAttention(ctx)
 			assert.Equal(t, ErrNoCredentialsProvidedForGithub, err, "Should return error")
 		})
 		t.Run("returns error when different providers credentials added", func(t *testing.T) {
@@ -29,7 +31,7 @@ func TestService(t *testing.T) {
 			_ = sut.AddCredentials("github", "sometoken")
 			repo := &Repository{Name: "reponame", Owner: "owner", Provider: "gitlab"}
 			_ = sut.AddRepository(repo)
-			repos, err := sut.NeedsAttention()
+			repos, err := sut.NeedsAttention(ctx)
 			assert.Nil(t, repos, "Should not return result")
 			assert.Equal(t, ErrNoCredentialsProvidedForGitlab, err, "Should return error")
 		})
@@ -38,7 +40,7 @@ func TestService(t *testing.T) {
 			repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
 			_ = sut.AddCredentials("github", "sometoken")
 			_ = sut.AddRepository(repo)
-			prs, err := sut.NeedsAttention()
+			prs, err := sut.NeedsAttention(ctx)
 			assert.Equal(t, make([]*Pullrequest, 0), prs, "Should return empty list")
 			assert.Equal(t, ErrCannotQueryRepository, err, "Should return error")
 		})
@@ -49,7 +51,7 @@ func TestService(t *testing.T) {
 			provider.PullRequestsToReturn(*repo, "sometoken", expected)
 			_ = sut.AddCredentials("github", "sometoken")
 			_ = sut.AddRepository(repo)
-			prs, err := sut.NeedsAttention()
+			prs, err := sut.NeedsAttention(ctx)
 			assert.Equal(t, expected, prs, "Should return empty list")
 			assert.Nil(t, err, "Should not return error")
 		})
