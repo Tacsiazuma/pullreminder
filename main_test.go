@@ -10,106 +10,131 @@ func TestItWorks(t *testing.T) {
 	_ = CreateService()
 }
 
-func TestItReturnsErrorWhenNoRepositoriesProvided(t *testing.T) {
-	sut := CreateService()
-	result, err := sut.NeedsAttention()
-	assert.Equal(t, ErrNoRepositoriesProvided, err, "Should return error")
-	assert.Nil(t, result, "Should return nil")
+func TestNeedsAttention(t *testing.T) {
+	t.Run("returns error when no repositories provided", func(t *testing.T) {
+		sut := CreateService()
+		result, err := sut.NeedsAttention()
+		assert.Equal(t, ErrNoRepositoriesProvided, err, "Should return error")
+		assert.Nil(t, result, "Should return nil")
+	})
+	t.Run("returns error when no credentials provided", func(t *testing.T) {
+		sut := CreateService()
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
+		_ = sut.AddRepository(repo)
+		_, err := sut.NeedsAttention()
+		assert.Equal(t, ErrNoCredentialsProvidedForGithub, err, "Should return error")
+	})
+	t.Run("returns error when different providers credentials added", func(t *testing.T) {
+		sut := CreateService()
+		_ = sut.AddCredentials("github", "sometoken")
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "gitlab"}
+		_ = sut.AddRepository(repo)
+		repos, err := sut.NeedsAttention()
+		assert.Nil(t, repos, "Should not return result")
+		assert.Equal(t, ErrNoCredentialsProvidedForGitlab, err, "Should return error")
+	})
+	t.Run("returns empty list and error when provider is failing to query repo", func(t *testing.T) {
+		sut := CreateService()
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
+		_ = sut.AddCredentials("github", "sometoken")
+		_ = sut.AddRepository(repo)
+		prs, err := sut.NeedsAttention()
+		assert.Equal(t, make([]*Pullrequest, 0), prs, "Should return empty list")
+		assert.Equal(t, ErrCannotQueryRepository, err, "Should return error")
+	})
+	t.Run("returns empty list without error when provider returns empty list", func(t *testing.T) {
+		sut := CreateService()
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
+        expected := make([]*Pullrequest, 0)
+		provider.PullRequestsToReturn(*repo, "sometoken", expected)
+		_ = sut.AddCredentials("github", "sometoken")
+		_ = sut.AddRepository(repo)
+		prs, err := sut.NeedsAttention()
+		assert.Equal(t, expected, prs, "Should return empty list")
+		assert.Nil(t, err, "Should not return error")
+	})
 }
 
-func TestItReturnsEmptySliceIfNoRepositoriesFedIn(t *testing.T) {
+func TestAddRepository(t *testing.T) {
 	sut := CreateService()
-	list, err := sut.Repositories()
-	assert.Empty(t, list, "It should return an empty slice")
-	assert.Nil(t, err, "Should not return error")
+	t.Run("returns error when no name provided", func(t *testing.T) {
+		repo := &Repository{}
+		err := sut.AddRepository(repo)
+		assert.Equal(t, ErrRepositoryMissingName, err, "Should return error")
+	})
+	t.Run("returns error when no owner provided", func(t *testing.T) {
+		repo := &Repository{Name: "reponame"}
+		err := sut.AddRepository(repo)
+		assert.Equal(t, ErrRepositoryMissingOwner, err, "Should return error")
+	})
+	t.Run("returns error when no provider passed", func(t *testing.T) {
+		repo := &Repository{Name: "reponame", Owner: "owner"}
+		err := sut.AddRepository(repo)
+		assert.Equal(t, ErrRepositoryMissingProvider, err, "Should return error")
+	})
+	t.Run("returns error when invalid provider passed", func(t *testing.T) {
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "notgithub"}
+		err := sut.AddRepository(repo)
+		assert.Equal(t, ErrRepositoryInvalidProvider, err, "Should return error")
+	})
+	t.Run("does not return error when valid provider passed", func(t *testing.T) {
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
+		err := sut.AddRepository(repo)
+		assert.Nil(t, err, "Should not return error")
+	})
+	t.Run("returns error when adding same repository twice", func(t *testing.T) {
+		sut := CreateService()
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
+		_ = sut.AddRepository(repo)
+		err := sut.AddRepository(repo)
+		assert.Equal(t, ErrRepositoryDuplicate, err, "Should return error")
+	})
 }
 
-func TestItReturnsErrorWhenRepositoryWithoutNameProvided(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{}
-	err := sut.AddRepository(repo)
-	assert.Equal(t, ErrRepositoryMissingName, err, "Should return error")
+func TestRepositories(t *testing.T) {
+	t.Run("returns and empty slice if no repository added", func(t *testing.T) {
+		sut := CreateService()
+		list, err := sut.Repositories()
+		assert.Empty(t, list, "It should return an empty slice")
+		assert.Nil(t, err, "Should not return error")
+	})
+	t.Run("returns repository after adding it", func(t *testing.T) {
+		sut := CreateService()
+		repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
+		_ = sut.AddRepository(repo)
+		repos, err := sut.Repositories()
+		assert.Nil(t, err, "Should not return error")
+		assert.Equal(t, repo, repos[0], "Should return the same")
+	})
 }
 
-func TestItReturnsErrorWhenRepositoryWithoutOwnerProvided(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame"}
-	err := sut.AddRepository(repo)
-	assert.Equal(t, ErrRepositoryMissingOwner, err, "Should return error")
+func TestAddCredentials(t *testing.T) {
+	t.Run("fails when invoked with invalid provider", func(t *testing.T) {
+		sut := CreateService()
+		err := sut.AddCredentials("notgithub", "sometoken")
+		assert.Equal(t, ErrInvalidProvider, err, "Should return error")
+	})
+	t.Run("succeeds when invoked with valid provider", func(t *testing.T) {
+		sut := CreateService()
+		err := sut.AddCredentials("github", "sometoken")
+		assert.Nil(t, err, "Should not return error")
+	})
+
 }
 
-func TestItReturnsErrorWhenRepositoryWithoutProviderPassed(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame", Owner: "owner"}
-	err := sut.AddRepository(repo)
-	assert.Equal(t, ErrRepositoryMissingProvider, err, "Should return error")
-}
-
-func TestItReturnsErrorWhenRepositoryWithInvalidProvider(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame", Owner: "owner", Provider: "notgithub"}
-	err := sut.AddRepository(repo)
-	assert.Equal(t, ErrRepositoryInvalidProvider, err, "Should return error")
-}
-
-func TestItDoesNotReturnErrorWhenValidRepositoryProvided(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
-	err := sut.AddRepository(repo)
-	assert.Nil(t, err, "Should not return error")
-}
-
-func TestItReturnsRepositoryAfterAddingIt(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
-	_ = sut.AddRepository(repo)
-	repos, err := sut.Repositories()
-	assert.Nil(t, err, "Should not return error")
-	assert.Equal(t, repo, repos[0], "Should return the same")
-}
-
-func TestItReturnsErrorWhenAddingSameRepoTwice(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
-	_ = sut.AddRepository(repo)
-	err := sut.AddRepository(repo)
-	assert.Equal(t, ErrRepositoryDuplicate, err, "Should return error")
-}
-
-func TestNeedsAttentionReturnsErrorWhenNoCredentialsProvided(t *testing.T) {
-	sut := CreateService()
-	repo := &Repository{Name: "reponame", Owner: "owner", Provider: "github"}
-	_ = sut.AddRepository(repo)
-	_, err := sut.NeedsAttention()
-	assert.Equal(t, ErrNoCredentialsProvidedForGithub, err, "Should return error")
-}
-
-func TestAddCredentialsFailsWhenUsedWithInvalidProvider(t *testing.T) {
-	sut := CreateService()
-	err := sut.AddCredentials("notgithub", "sometoken")
-	assert.Equal(t, ErrInvalidProvider, err, "Should return error")
-}
-
-func TestAddCredentialsSucceedsWhenUsedWithValidProvider(t *testing.T) {
-	sut := CreateService()
-	err := sut.AddCredentials("github", "sometoken")
-	assert.Nil(t, err, "Should not return error")
-}
-
-func TestNeedsAttentionReturnsErrorWhenDifferentProviderCredentialProvided(t *testing.T) {
-	sut := CreateService()
-	_ = sut.AddCredentials("github", "sometoken")
-	repo := &Repository{Name: "reponame", Owner: "owner", Provider: "gitlab"}
-	_ = sut.AddRepository(repo)
-	repos, err := sut.NeedsAttention()
-	assert.Nil(t, repos, "Should not return result")
-	assert.Equal(t, ErrNoCredentialsProvidedForGitlab, err, "Should return error")
-}
+var provider FakeProvider
 
 func CreateService() *Service {
-	return New()
+	provider = NewFakeProvider()
+	return New(&provider)
 }
 
 // feed in repositories and credentials
+// get list of PRs which requires attention
+// invoke provider to check if repositories are available
+// unavailable repositories will be marked with error
+// invoke provider to get list of open PRs associated to repositories
+// return PRs or empty slice
+// ability to check draft PRs as well
 // ask if there is anything to do
 // list repositories fed in
