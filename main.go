@@ -5,6 +5,10 @@ import (
 	"errors"
 )
 
+func main() {
+    
+}
+
 type Service struct {
 	store    Store
 	provider Provider
