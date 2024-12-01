@@ -1,6 +1,11 @@
 package main
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+)
 
 type Service struct {
 	store    Store
@@ -43,7 +48,7 @@ func (s *Service) NeedsAttention() ([]*Pullrequest, error) {
 				return nil, ErrNoCredentialsProvidedForGithub
 			}
 		}
-		prs, err := s.provider.GetPullRequests(*repo, creds[repo.Provider])
+		prs, err := s.provider.GetPullRequests(context.TODO(), *repo, creds[repo.Provider])
 		if err != nil {
 			return total, err
 		}

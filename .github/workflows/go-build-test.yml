@@ -1,0 +1,38 @@
+name: Go Build and Test
+
+# Trigger the workflow on push to any branch
+on:
+  push:
+    branches:
+      - "*"
+
+jobs:
+  go-build-test:
+    runs-on: ubuntu-latest  # The job will run on an Ubuntu runner
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3  # This action checks out your repository
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.23'  # You can specify the Go version here
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/go-build
+        key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-mod-
+
+    - name: Install dependencies
+      run: go mod tidy  # This will download the dependencies
+
+    - name: Build the Go project
+      run: go build -v ./...  # This will build your Go code
+
+    - name: Run tests
+      run: go test -v ./...  # This will run your Go tests
+
