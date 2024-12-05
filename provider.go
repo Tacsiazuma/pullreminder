@@ -33,12 +33,11 @@ func (f *FakeProvider) PullRequestsToReturn(repo Repository, token string, prs [
 }
 
 type GithubProvider struct {
-	username string
-	token    string
+	token string
 }
 
-func NewGithubProvider(username string, token string) *GithubProvider {
-	return &GithubProvider{username: username, token: token}
+func NewGithubProvider(token string) *GithubProvider {
+	return &GithubProvider{token: token}
 }
 
 func (f *GithubProvider) GetPullRequests(ctx context.Context, repo, owner, base string) ([]*Pullrequest, error) {

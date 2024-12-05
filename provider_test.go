@@ -14,9 +14,8 @@ func TestGithubProvider(t *testing.T) {
 	}
 	ctx := context.TODO()
 	token := os.Getenv("GITHUB_TOKEN")
-	username := "Tacsiazuma"
 	assert.NotEqual(t, token, "", "A valid github token should be set!")
-	sut := NewGithubProvider(username, token)
+	sut := NewGithubProvider(token)
 	t.Run("instance", func(t *testing.T) {
 		t.Run("can be instantiated without a token", func(t *testing.T) {
 			assert.NotNil(t, sut, "should not be nil")
@@ -26,7 +25,7 @@ func TestGithubProvider(t *testing.T) {
 		reponame := "pullreminder-test"
 		owner := "tacsiazuma"
 		t.Run("fail if the provided token is not valid", func(t *testing.T) {
-			sut := NewGithubProvider(username, "invalid token")
+			sut := NewGithubProvider("invalid token")
 			prs, err := sut.GetPullRequests(ctx, reponame, owner, "master")
 			assert.Nil(t, prs, "Should not return pull requests")
 			assert.Equal(t, ErrCannotQueryRepository, err, "Should return error")

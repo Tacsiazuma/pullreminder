@@ -51,9 +51,20 @@ func (s *Service) NeedsAttention(ctx context.Context) ([]*Pullrequest, error) {
 		if err != nil {
 			return total, err
 		}
-		total = append(total, prs...)
+		total = append(total, s.filter(prs)...)
 	}
 	return total, nil
+}
+
+func (s *Service) filter(origin []*Pullrequest) []*Pullrequest {
+	var result []*Pullrequest
+	for _, pr := range origin {
+		if !pr.Mergeable {
+			continue
+		}
+		result = append(result, pr)
+	}
+	return result
 }
 
 func (s *Service) Repositories() ([]*Repository, error) {
