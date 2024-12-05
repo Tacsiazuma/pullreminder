@@ -47,7 +47,7 @@ func (s *Service) NeedsAttention(ctx context.Context) ([]*Pullrequest, error) {
 				return nil, ErrNoCredentialsProvidedForGithub
 			}
 		}
-		prs, err := s.provider.GetPullRequests(ctx, *repo, creds[repo.Provider], "main")
+		prs, err := s.provider.GetPullRequests(ctx, repo.Owner, repo.Name, "main")
 		if err != nil {
 			return total, err
 		}
@@ -97,11 +97,22 @@ type Repository struct {
 }
 
 type Pullrequest struct {
-	Number int
-	URL    string
+	Number      int
+	URL         string
+	Author      string
+	Title       string
+	Opened      time.Time
+	Assignee    string
+	Reviewers   []string
+	Description string
+	Mergeable   bool
+	Reviews     []Review
+}
+
+type Review struct {
+	Body   string
+	State  string
 	Author string
-	Title  string
-	Opened time.Time
 }
 
 func (r *Repository) Equal(other *Repository) bool {

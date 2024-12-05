@@ -8,7 +8,8 @@ import (
 )
 
 type Provider interface {
-	GetPullRequests(ctx context.Context, repo Repository, token, base string) ([]*Pullrequest, error)
+	// Returns the pull requests for a given repository against the provided base branch
+	GetPullRequests(ctx context.Context, owner, name, base string) ([]*Pullrequest, error)
 }
 
 type FakeProvider struct {
@@ -19,8 +20,8 @@ func NewFakeProvider() FakeProvider {
 	return FakeProvider{prs: make(map[string][]*Pullrequest)}
 }
 
-func (f *FakeProvider) GetPullRequests(ctx context.Context, repo Repository, token, base string) ([]*Pullrequest, error) {
-	value, success := f.prs[repo.ToString()+token]
+func (f *FakeProvider) GetPullRequests(ctx context.Context, owner, name, base string) ([]*Pullrequest, error) {
+	value, success := f.prs[owner+name]
 	if !success {
 		return nil, ErrCannotQueryRepository
 	}
@@ -28,26 +29,27 @@ func (f *FakeProvider) GetPullRequests(ctx context.Context, repo Repository, tok
 }
 
 func (f *FakeProvider) PullRequestsToReturn(repo Repository, token string, prs []*Pullrequest) {
-	f.prs[repo.ToString()+token] = prs
+	f.prs[repo.Owner+repo.Name] = prs
 }
 
 type GithubProvider struct {
 	username string
+	token    string
 }
 
-func NewGithubProvider(username string) *GithubProvider {
-	return &GithubProvider{username: username}
+func NewGithubProvider(username string, token string) *GithubProvider {
+	return &GithubProvider{username: username, token: token}
 }
 
-func (f *GithubProvider) GetPullRequests(ctx context.Context, repo Repository, token, base string) ([]*Pullrequest, error) {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+func (f *GithubProvider) GetPullRequests(ctx context.Context, repo, owner, base string) ([]*Pullrequest, error) {
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: f.token})
 	client := github.NewClient(oauth2.NewClient(ctx, ts))
-	options := &github.PullRequestListOptions{Base: base, State: "open"}
-	prs, _, err := client.PullRequests.List(ctx, repo.Owner, repo.Name, options)
+	options := &github.PullRequestListOptions{Base: base}
+	prs, _, err := client.PullRequests.List(ctx, owner, repo, options)
 	if err != nil {
 		return nil, ErrCannotQueryRepository
 	}
-	return f.mapToPR(ctx, client, repo.Owner, repo.Name, prs), err
+	return f.mapToPR(ctx, client, owner, repo, prs), err
 }
 
 func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, owner, name string, origin []*github.PullRequest) (target []*Pullrequest) {
@@ -59,38 +61,51 @@ func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, own
 			fmt.Printf("Skipping #%d PR due to err %v\n", *pr.Number, err)
 			continue
 		}
-		if *details.State == "close" {
-			fmt.Printf("Skipping #%d PR due to closed state\n", *pr.Number)
-			continue
-		}
-		if !*details.Mergeable {
-			fmt.Printf("Skipping #%d PR due to conflicting state\n", *pr.Number)
-			continue
-		}
 		reviews, _, err := client.PullRequests.ListReviews(ctx, owner, name, *pr.Number, &github.ListOptions{})
 		if err != nil {
 			fmt.Printf("Skipping #%d PR due to err when listing reviews %v\n", *pr.Number, err)
 			continue
 		}
-		var isApprovedByUser bool
-		for _, review := range reviews {
-			fmt.Printf("Review %s in state %s", *review.User.Login, *review.State)
-			if *review.User.Login == f.username && *review.State == "APPROVED" {
-				isApprovedByUser = true
-				break
-			}
+		var description string
+		if pr.Body == nil {
+			description = ""
+		} else {
+			description = *pr.Body
 		}
-		if isApprovedByUser {
-			fmt.Printf("Skipping #%d PR due to already being approved\n", *pr.Number)
-			continue
+		var assignee string
+		if pr.Assignee == nil {
+			assignee = ""
+		} else {
+			assignee = *pr.Assignee.Login
 		}
 		target = append(target, &Pullrequest{
-			Number: *pr.Number,
-			URL:    *pr.HTMLURL,
-			Author: *pr.User.Login,
-			Title:  *pr.Title,
-			Opened: pr.CreatedAt.Time,
+			Number:      *pr.Number,
+			URL:         *pr.HTMLURL,
+			Author:      *pr.User.Login,
+			Title:       *pr.Title,
+			Opened:      pr.CreatedAt.Time,
+			Assignee:    assignee,
+			Description: description,
+			Mergeable:   *details.Mergeable,
+			Reviewers:   MapReviewers(pr.RequestedReviewers),
+			Reviews:     MapReviews(reviews),
 		})
 	}
 	return target
+}
+
+func MapReviewers(reviewers []*github.User) []string {
+	result := make([]string, len(reviewers))
+	for i, r := range reviewers {
+		result[i] = *r.Login
+	}
+	return result
+}
+
+func MapReviews(reviews []*github.PullRequestReview) []Review {
+	result := make([]Review, len(reviews))
+	for i, r := range reviews {
+		result[i] = Review{Author: *r.User.Login, Body: *r.Body, State: *r.State}
+	}
+	return result
 }

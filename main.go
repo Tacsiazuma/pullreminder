@@ -32,7 +32,7 @@ func main() {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			service := New(NewGithubProvider(ctx.String("username")))
+			service := New(NewGithubProvider(ctx.String("username"), os.Getenv("GITHUB_TOKEN")))
 			err := service.AddRepository(&Repository{Name: ctx.String("name"), Owner: ctx.String("owner"), Provider: "github"})
 			if err != nil {
 				return err
