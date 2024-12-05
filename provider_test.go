@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"time"
 )
 
 func TestProvider(t *testing.T) {
@@ -39,7 +39,12 @@ func TestProvider(t *testing.T) {
 		t.Run("return open PRs opened against the base branch", func(t *testing.T) {
 			repo := &Repository{Name: "pullreminder-test", Owner: "tacsiazuma"}
 			prs, err := sut.GetPullRequests(ctx, *repo, token, "main")
-			expected := &Pullrequest{Number: 1, URL: "https://github.com/Tacsiazuma/pullreminder-test/pull/1"}
+			expected := &Pullrequest{Number: 1,
+				URL:    "https://github.com/Tacsiazuma/pullreminder-test/pull/1",
+				Author: "Tacsiazuma",
+				Title:  "Update LICENSE",
+				Opened: time.Date(2024, 12, 1, 22, 3, 25, 0, time.UTC),
+			}
 			if assert.NotNil(t, prs) && assert.Equal(t, 1, len(prs), "Should contain pull requests") {
 				assert.Equal(t, prs[0], expected, "Should return open PRs")
 				assert.Nil(t, err, "Should not return error")

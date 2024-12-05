@@ -87,6 +87,9 @@ func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, own
 		target = append(target, &Pullrequest{
 			Number: *pr.Number,
 			URL:    *pr.HTMLURL,
+			Author: *pr.User.Login,
+			Title:  *pr.Title,
+			Opened: pr.CreatedAt.Time,
 		})
 	}
 	return target

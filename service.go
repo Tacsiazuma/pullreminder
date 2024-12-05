@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 type Service struct {
@@ -99,6 +100,8 @@ type Pullrequest struct {
 	Number int
 	URL    string
 	Author string
+	Title  string
+	Opened time.Time
 }
 
 func (r *Repository) Equal(other *Repository) bool {
