@@ -2,116 +2,58 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
 
-}
-
-type Service struct {
-	store    Store
-	provider Provider
-}
-
-func New(provider Provider) *Service {
-	return &Service{
-		&FakeStore{repositories: make([]*Repository, 0), credentails: make(map[string]string)},
-		provider,
-	}
-}
-
-var (
-	ErrNoRepositoriesProvided         = errors.New("No repositories has been provided")
-	ErrRepositoryMissingName          = errors.New("Repository should have a name")
-	ErrRepositoryMissingOwner         = errors.New("Repository should have an owner")
-	ErrRepositoryMissingProvider      = errors.New("Repository should have an provider")
-	ErrRepositoryInvalidProvider      = errors.New("Providers should be (github or gitlab)")
-	ErrInvalidProvider                = errors.New("Providers should be (github or gitlab)")
-	ErrRepositoryDuplicate            = errors.New("Cannot add the same repository twice")
-	ErrNoCredentialsProvidedForGithub = errors.New("No credentials provided for github")
-	ErrNoCredentialsProvidedForGitlab = errors.New("No credentials provided for gitlab")
-	ErrCannotQueryRepository          = errors.New("Repository cannot be queried")
-)
-
-func (s *Service) NeedsAttention(ctx context.Context) ([]*Pullrequest, error) {
-	repos, _ := s.store.Repositories()
-	if len(repos) == 0 {
-		return nil, ErrNoRepositoriesProvided
-	}
-	creds, _ := s.store.Credentials()
-	total := make([]*Pullrequest, 0)
-	for _, repo := range repos {
-		if creds[repo.Provider] == "" {
-			switch repo.Provider {
-			case "gitlab":
-				return nil, ErrNoCredentialsProvidedForGitlab
-			case "github":
-				return nil, ErrNoCredentialsProvidedForGithub
+	app := &cli.App{
+		Name:  "pullreminder",
+		Usage: "Shows pull requests which require your attention",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "owner",
+				Required: true,
+				Usage:    "owner of the repository",
+			},
+			&cli.StringFlag{
+				Name:     "name",
+				Required: true,
+				Usage:    "name of the repository",
+			},
+			&cli.StringFlag{
+				Name:     "username",
+				Required: true,
+				Usage:    "your github username",
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			service := New(NewGithubProvider(ctx.String("username")))
+			err := service.AddRepository(&Repository{Name: ctx.String("name"), Owner: ctx.String("owner"), Provider: "github"})
+			if err != nil {
+				return err
 			}
-		}
-		prs, err := s.provider.GetPullRequests(ctx, *repo, creds[repo.Provider], "main")
-		if err != nil {
-			return total, err
-		}
-		total = append(total, prs...)
+			err = service.AddCredentials("github", os.Getenv("GITHUB_TOKEN"))
+			if err != nil {
+				return err
+			}
+			prs, err := service.NeedsAttention(context.Background())
+			if err != nil {
+				return err
+			}
+			fmt.Printf("You have %d PRs to check\n\n", len(prs))
+			for _, pr := range prs {
+				fmt.Printf("#%d %s\n", pr.Number, pr.URL)
+			}
+			return nil
+		},
 	}
-	return total, nil
-}
 
-func (s *Service) Repositories() ([]*Repository, error) {
-	return s.store.Repositories()
-}
-
-func (s *Service) AddCredentials(provider, token string) error {
-	switch provider {
-	case "github":
-		break
-	case "gitlab":
-		break
-	default:
-		return ErrInvalidProvider
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
 	}
-	return s.store.AddCredentials(provider, token)
-}
-
-func (s *Service) AddRepository(repo *Repository) error {
-	if repo.Name == "" {
-		return ErrRepositoryMissingName
-	}
-	if repo.Owner == "" {
-		return ErrRepositoryMissingOwner
-	}
-	switch repo.Provider {
-	case "gitlab":
-	case "github":
-	case "":
-		return ErrRepositoryMissingProvider
-	default:
-		return ErrRepositoryInvalidProvider
-	}
-	return s.store.AddRepository(repo)
-}
-
-type Repository struct {
-	Name     string
-	Owner    string
-	Provider string
-}
-
-type Pullrequest struct {
-	Number   int
-	URL      string
-	Author   string
-}
-
-func (r *Repository) Equal(other *Repository) bool {
-	if r.Name == other.Name && r.Owner == other.Owner && r.Provider == other.Provider {
-		return true
-	}
-	return false
-}
-
-func (r *Repository) ToString() string {
-	return r.Name + r.Owner + r.Provider
 }

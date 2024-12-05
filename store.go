@@ -12,6 +12,10 @@ type FakeStore struct {
 	credentails  map[string]string
 }
 
+func NewFakeStore() Store {
+	return &FakeStore{repositories: make([]*Repository, 0), credentails: make(map[string]string)}
+}
+
 func (s *FakeStore) AddRepository(repo *Repository) error {
 	for _, r := range s.repositories {
 		if r.Equal(repo) {
