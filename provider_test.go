@@ -41,14 +41,14 @@ func TestProvider(t *testing.T) {
 			prs, err := sut.GetPullRequests(ctx, *repo, token, "main")
 			expected := &Pullrequest{Number: 1, URL: "https://github.com/Tacsiazuma/pullreminder-test/pull/1"}
 			if assert.NotNil(t, prs) && assert.Equal(t, 1, len(prs), "Should contain pull requests") {
-				assert.Equal(t, prs[0], expected, "Should return pull requests")
+				assert.Equal(t, prs[0], expected, "Should return open PRs")
 				assert.Nil(t, err, "Should not return error")
 			}
 		})
 		t.Run("does not return PRs approved by user", func(t *testing.T) {
 			repo := &Repository{Name: "pullreminder-test", Owner: "tacsiazuma"}
 			prs, err := sut.GetPullRequests(ctx, *repo, token, "approved")
-			assert.Equal(t, 0, len(prs), "Should not return PRs")
+			assert.Equal(t, 0, len(prs), "Should not return approved PRs")
 			assert.Nil(t, err, "Should not return error")
 		})
 		// https://github.com/Tacsiazuma/pullreminder-test/pull/3 approved-pr -> closed
@@ -56,6 +56,12 @@ func TestProvider(t *testing.T) {
 			repo := &Repository{Name: "pullreminder-test", Owner: "tacsiazuma"}
 			prs, err := sut.GetPullRequests(ctx, *repo, token, "closed")
 			assert.Equal(t, 0, len(prs), "Should not return closed PRs")
+			assert.Nil(t, err, "Should not return error")
+		})
+		t.Run("does not return conflicting PRs", func(t *testing.T) {
+			repo := &Repository{Name: "pullreminder-test", Owner: "tacsiazuma"}
+			prs, err := sut.GetPullRequests(ctx, *repo, token, "conflicting")
+			assert.Equal(t, 0, len(prs), "Should not return conflicting PRs")
 			assert.Nil(t, err, "Should not return error")
 		})
 	})

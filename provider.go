@@ -63,6 +63,10 @@ func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, own
 			fmt.Printf("Skipping #%d PR due to closed state\n", *pr.Number)
 			continue
 		}
+		if !*details.Mergeable {
+			fmt.Printf("Skipping #%d PR due to conflicting state\n", *pr.Number)
+			continue
+		}
 		reviews, _, err := client.PullRequests.ListReviews(ctx, owner, name, *pr.Number, &github.ListOptions{})
 		if err != nil {
 			fmt.Printf("Skipping #%d PR due to err when listing reviews %v\n", *pr.Number, err)
