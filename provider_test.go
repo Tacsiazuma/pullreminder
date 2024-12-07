@@ -26,18 +26,18 @@ func TestGithubProvider(t *testing.T) {
 		owner := "tacsiazuma"
 		t.Run("fail if the provided token is not valid", func(t *testing.T) {
 			sut := NewGithubProvider("invalid token")
-			prs, err := sut.GetPullRequests(ctx, reponame, owner, "master")
+			prs, err := sut.GetPullRequests(ctx, owner, reponame, "master")
 			assert.Nil(t, prs, "Should not return pull requests")
 			assert.Equal(t, ErrCannotQueryRepository, err, "Should return error")
 		})
 		t.Run("return empty slice if no PRs on the base branch", func(t *testing.T) {
 			expected := make([]*Pullrequest, 0)
-			prs, err := sut.GetPullRequests(ctx, reponame, owner, "master")
+			prs, err := sut.GetPullRequests(ctx, owner, reponame, "master")
 			assert.Equal(t, prs, expected, "Should not return pull requests")
 			assert.Nil(t, err, "Should not return error")
 		})
 		t.Run("return open PRs opened against the base branch", func(t *testing.T) {
-			prs, err := sut.GetPullRequests(ctx, reponame, owner, "main")
+			prs, err := sut.GetPullRequests(ctx, owner, reponame, "main")
 			rev := &Review{Author: "Tacsiazuma", Body: "Oh noes", State: "COMMENTED"}
 			expected := &Pullrequest{Number: 1,
 				URL:         "https://github.com/Tacsiazuma/pullreminder-test/pull/1",
@@ -56,18 +56,18 @@ func TestGithubProvider(t *testing.T) {
 			}
 		})
 		t.Run("does return PRs approved by user", func(t *testing.T) {
-			prs, err := sut.GetPullRequests(ctx, reponame, owner, "approved")
+			prs, err := sut.GetPullRequests(ctx, owner, reponame, "approved")
 			assert.Equal(t, 1, len(prs), "Should return approved PRs")
 			assert.Nil(t, err, "Should not return error")
 		})
 		// https://github.com/Tacsiazuma/pullreminder-test/pull/3 approved-pr -> closed
 		t.Run("does not return closed PRs", func(t *testing.T) {
-			prs, err := sut.GetPullRequests(ctx, reponame, owner, "closed")
+			prs, err := sut.GetPullRequests(ctx, owner, reponame, "closed")
 			assert.Equal(t, 0, len(prs), "Should not return closed PRs")
 			assert.Nil(t, err, "Should not return error")
 		})
 		t.Run("does return conflicting PRs", func(t *testing.T) {
-			prs, err := sut.GetPullRequests(ctx, reponame, owner, "conflicting")
+			prs, err := sut.GetPullRequests(ctx, owner, reponame, "conflicting")
 			assert.Equal(t, 1, len(prs), "Should return conflicting PRs")
 			assert.Nil(t, err, "Should not return error")
 		})

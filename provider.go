@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/go-github/v67/github"
 	"golang.org/x/oauth2"
 )
@@ -21,6 +22,7 @@ func NewFakeProvider() FakeProvider {
 }
 
 func (f *FakeProvider) GetPullRequests(ctx context.Context, owner, name, base string) ([]*Pullrequest, error) {
+	fmt.Printf("Getting repos for %s/%s\n", owner, name)
 	value, success := f.prs[owner+name]
 	if !success {
 		return nil, ErrCannotQueryRepository
@@ -40,7 +42,7 @@ func NewGithubProvider(token string) *GithubProvider {
 	return &GithubProvider{token: token}
 }
 
-func (f *GithubProvider) GetPullRequests(ctx context.Context, repo, owner, base string) ([]*Pullrequest, error) {
+func (f *GithubProvider) GetPullRequests(ctx context.Context, owner, repo, base string) ([]*Pullrequest, error) {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: f.token})
 	client := github.NewClient(oauth2.NewClient(ctx, ts))
 	options := &github.PullRequestListOptions{Base: base}
