@@ -149,7 +149,8 @@ var provider FakeProvider
 
 func CreateService() *Service {
 	provider = NewFakeProvider()
-	return New(&provider)
+	store := NewFakeStore()
+	return New(&provider, store)
 }
 
 func CreateConflictingPR() []*Pullrequest {

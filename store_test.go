@@ -16,6 +16,7 @@ func TestSqliteStore(t *testing.T) {
 		log.Fatal(err)
 	}
 	sut := NewSqliteStore(db)
+	defer db.Close()
 	t.Run("repositories", func(t *testing.T) {
 		t.Run("returns empty slice if no repository added", func(t *testing.T) {
 			expected := make([]*Repository, 0)

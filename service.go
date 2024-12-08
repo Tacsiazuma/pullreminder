@@ -11,9 +11,9 @@ type Service struct {
 	provider Provider
 }
 
-func New(provider Provider) *Service {
+func New(provider Provider, store Store) *Service {
 	return &Service{
-		store:    NewFakeStore(),
+		store:    store,
 		provider: provider,
 	}
 }
