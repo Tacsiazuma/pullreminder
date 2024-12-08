@@ -17,3 +17,7 @@ export function OnShutdown(arg1) {
 export function Repos() {
   return window['go']['main']['App']['Repos']();
 }
+
+export function UpdateSchedule(arg1) {
+  return window['go']['main']['App']['UpdateSchedule'](arg1);
+}

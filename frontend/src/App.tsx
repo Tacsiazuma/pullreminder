@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
-import { Repos, AddRepo, CheckPRs } from "../wailsjs/go/main/App";
+import { Repos, AddRepo, CheckPRs, UpdateSchedule } from "../wailsjs/go/main/App";
 import { BrowserOpenURL } from '../wailsjs/runtime'
 import { contract } from '../wailsjs/go/models';
 import RepositoryList from './components/RepositoryList';
@@ -66,7 +66,7 @@ function App() {
                 />
                 <Route
                     path="/schedule"
-                    element={<ScheduleForm onSubmit={(schedule) => console.log('Set Schedule:', schedule)} />}
+                    element={<ScheduleForm onSubmit={(schedule) => UpdateSchedule(schedule)} />}
                 />
                 <Route
                     path="/settings"

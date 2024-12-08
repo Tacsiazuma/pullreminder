@@ -10,3 +10,5 @@ export function CheckPRs():Promise<Array<contract.Pullrequest>>;
 export function OnShutdown(arg1:context.Context):Promise<void>;
 
 export function Repos():Promise<Array<contract.Repository>>;
+
+export function UpdateSchedule(arg1:string):Promise<void>;

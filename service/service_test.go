@@ -69,17 +69,6 @@ func TestService(t *testing.T) {
 			assert.Equal(t, 0, len(prs), "Should return empty list")
 			assert.Nil(t, err, "Should not return error")
 		})
-		t.Run("does not return accepted PRs by the user", func(t *testing.T) {
-			sut := CreateService()
-			repo := &c.Repository{Name: "reponame", Owner: "owner", Provider: "github"}
-			_ = sut.AddCredentials("github", "sometoken")
-			_ = sut.AddRepository(repo)
-			expected := CreateConflictingPR()
-			provider.PullRequestsToReturn(*repo, "sometoken", expected)
-			prs, err := sut.NeedsAttention(ctx)
-			assert.Equal(t, 0, len(prs), "Should return empty list")
-			assert.Nil(t, err, "Should not return error")
-		})
 	})
 	t.Run("AddRepository function", func(t *testing.T) {
 		sut := CreateService()

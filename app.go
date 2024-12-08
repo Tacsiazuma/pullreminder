@@ -50,13 +50,35 @@ func (a *App) startup(ctx context.Context) {
 		log.Fatal(err)
 	}
 	a.scheduler = s
-	a.scheduler.NewJob(
-		gocron.CronJob("* * * * *", false), gocron.NewTask(
+	a.scheduler.Start()
+}
+
+func (a *App) UpdateSchedule(cron string) {
+	a.m.Lock()
+	defer a.m.Unlock()
+	a.scheduler.Shutdown()
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.scheduler = s
+	runtime.LogPrintf(a.ctx, "Notification schedule set to %s", cron)
+	_, err = a.scheduler.NewJob(
+		gocron.CronJob(cron, false), gocron.NewTask(
 			func() {
-				runtime.LogPrint(ctx, "notification sent")
-				_ = beeep.Notify("Hey you!", "A PR requires your attention!", "frontend/src/assets/images/logo-universal.png")
+				runtime.LogPrint(a.ctx, "notification sent")
+				prs, err := a.CheckPRs()
+				if err != nil {
+					runtime.LogPrint(a.ctx, err.Error())
+				}
+				if len(prs) > 0 {
+					_ = beeep.Notify("Hey you!", "A PR requires your attention!", "frontend/src/assets/images/logo-universal.png")
+				}
 			},
 		))
+	if err != nil {
+		log.Fatal(err)
+	}
 	a.scheduler.Start()
 }
 
