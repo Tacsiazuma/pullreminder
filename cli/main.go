@@ -4,11 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/kirsle/configdir"
-	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"path/filepath"
+	"tacsiazuma/pullreminder/provider"
+	"tacsiazuma/pullreminder/service"
+	"tacsiazuma/pullreminder/store"
+	c "tacsiazuma/pullreminder/contract"
+
+	"github.com/kirsle/configdir"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
@@ -21,7 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	service := New(NewGithubProvider(os.Getenv("GITHUB_TOKEN")), NewSqliteStore(db))
+	service := service.New(provider.NewGithubProvider(os.Getenv("GITHUB_TOKEN")), store.NewSqliteStore(db))
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{
@@ -45,7 +50,7 @@ func main() {
 					},
 				},
 				Action: func(ctx *cli.Context) error {
-					err = service.AddRepository(&Repository{Name: ctx.String("name"), Owner: ctx.String("owner"), Provider: ctx.String("provider")})
+					err = service.AddRepository(&c.Repository{Name: ctx.String("name"), Owner: ctx.String("owner"), Provider: ctx.String("provider")})
 					if err != nil {
 						return err
 					}

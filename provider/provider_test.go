@@ -1,9 +1,10 @@
-package main
+package provider
 
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"os"
+	c "tacsiazuma/pullreminder/contract"
 	"testing"
 	"time"
 )
@@ -31,15 +32,15 @@ func TestGithubProvider(t *testing.T) {
 			assert.Equal(t, ErrCannotQueryRepository, err, "Should return error")
 		})
 		t.Run("return empty slice if no PRs on the base branch", func(t *testing.T) {
-			expected := make([]*Pullrequest, 0)
+			expected := make([]*c.Pullrequest, 0)
 			prs, err := sut.GetPullRequests(ctx, owner, reponame, "master")
 			assert.Equal(t, prs, expected, "Should not return pull requests")
 			assert.Nil(t, err, "Should not return error")
 		})
 		t.Run("return open PRs opened against the base branch", func(t *testing.T) {
 			prs, err := sut.GetPullRequests(ctx, owner, reponame, "main")
-			rev := &Review{Author: "Tacsiazuma", Body: "Oh noes", State: "COMMENTED"}
-			expected := &Pullrequest{Number: 1,
+			rev := &c.Review{Author: "Tacsiazuma", Body: "Oh noes", State: "COMMENTED"}
+			expected := &c.Pullrequest{Number: 1,
 				URL:         "https://github.com/Tacsiazuma/pullreminder-test/pull/1",
 				Author:      "Tacsiazuma",
 				Title:       "Update LICENSE",
@@ -48,7 +49,7 @@ func TestGithubProvider(t *testing.T) {
 				Assignee:    "Tacsiazuma",
 				Mergeable:   true,
 				Reviewers:   []string{"letscodehu"},
-				Reviews:     []Review{*rev},
+				Reviews:     []c.Review{*rev},
 			}
 			if assert.NotNil(t, prs) && assert.Equal(t, 1, len(prs), "Should contain pull requests") {
 				assert.Equal(t, expected, prs[0], "Should return open PRs")

@@ -1,38 +1,27 @@
-package main
+package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"tacsiazuma/pullreminder/contract"
 
 	"github.com/google/go-github/v67/github"
 	"golang.org/x/oauth2"
 )
 
-type Provider interface {
-	// Returns the pull requests for a given repository against the provided base branch
-	GetPullRequests(ctx context.Context, owner, name, base string) ([]*Pullrequest, error)
-}
-
-type FakeProvider struct {
-	prs map[string][]*Pullrequest
-}
-
-func NewFakeProvider() FakeProvider {
-	return FakeProvider{prs: make(map[string][]*Pullrequest)}
-}
-
-func (f *FakeProvider) GetPullRequests(ctx context.Context, owner, name, base string) ([]*Pullrequest, error) {
-	fmt.Printf("Getting repos for %s/%s\n", owner, name)
-	value, success := f.prs[owner+name]
-	if !success {
-		return nil, ErrCannotQueryRepository
-	}
-	return value, nil
-}
-
-func (f *FakeProvider) PullRequestsToReturn(repo Repository, token string, prs []*Pullrequest) {
-	f.prs[repo.Owner+repo.Name] = prs
-}
+var (
+	ErrNoRepositoriesProvided         = errors.New("No repositories has been provided")
+	ErrRepositoryMissingName          = errors.New("Repository should have a name")
+	ErrRepositoryMissingOwner         = errors.New("Repository should have an owner")
+	ErrRepositoryMissingProvider      = errors.New("Repository should have an provider")
+	ErrRepositoryInvalidProvider      = errors.New("Providers should be (github or gitlab)")
+	ErrInvalidProvider                = errors.New("Providers should be (github or gitlab)")
+	ErrRepositoryDuplicate            = errors.New("Cannot add the same repository twice")
+	ErrNoCredentialsProvidedForGithub = errors.New("No credentials provided for github")
+	ErrNoCredentialsProvidedForGitlab = errors.New("No credentials provided for gitlab")
+	ErrCannotQueryRepository          = errors.New("Repository cannot be queried")
+)
 
 type GithubProvider struct {
 	token string
@@ -42,7 +31,7 @@ func NewGithubProvider(token string) *GithubProvider {
 	return &GithubProvider{token: token}
 }
 
-func (f *GithubProvider) GetPullRequests(ctx context.Context, owner, repo, base string) ([]*Pullrequest, error) {
+func (f *GithubProvider) GetPullRequests(ctx context.Context, owner, repo, base string) ([]*contract.Pullrequest, error) {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: f.token})
 	client := github.NewClient(oauth2.NewClient(ctx, ts))
 	options := &github.PullRequestListOptions{Base: base}
@@ -53,8 +42,8 @@ func (f *GithubProvider) GetPullRequests(ctx context.Context, owner, repo, base 
 	return f.mapToPR(ctx, client, owner, repo, prs), err
 }
 
-func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, owner, name string, origin []*github.PullRequest) (target []*Pullrequest) {
-	target = make([]*Pullrequest, 0)
+func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, owner, name string, origin []*github.PullRequest) (target []*contract.Pullrequest) {
+	target = make([]*contract.Pullrequest, 0)
 	for _, pr := range origin {
 		fmt.Printf("Processing #%d PR\n", *pr.Number)
 		details, _, err := client.PullRequests.Get(ctx, owner, name, *pr.Number)
@@ -79,7 +68,7 @@ func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, own
 		} else {
 			assignee = *pr.Assignee.Login
 		}
-		target = append(target, &Pullrequest{
+		target = append(target, &contract.Pullrequest{
 			Number:      *pr.Number,
 			URL:         *pr.HTMLURL,
 			Author:      *pr.User.Login,
@@ -103,10 +92,10 @@ func MapReviewers(reviewers []*github.User) []string {
 	return result
 }
 
-func MapReviews(reviews []*github.PullRequestReview) []Review {
-	result := make([]Review, len(reviews))
+func MapReviews(reviews []*github.PullRequestReview) []contract.Review {
+	result := make([]contract.Review, len(reviews))
 	for i, r := range reviews {
-		result[i] = Review{Author: *r.User.Login, Body: *r.Body, State: *r.State}
+		result[i] = contract.Review{Author: *r.User.Login, Body: *r.Body, State: *r.State}
 	}
 	return result
 }
