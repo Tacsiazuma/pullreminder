@@ -1,0 +1,117 @@
+/* Global styles */
+body {
+  font-family: "Fira Code", monospace; /* Linux terminal feel */
+  margin: 0;
+  padding: 0;
+  background-color: #282c34; /* Terminal-like background */
+  color: #abb2bf; /* Subtle text color */
+}
+
+nav {
+  background-color: #3b4252; /* Linux panel-like look */
+  padding: 10px 20px;
+  display: flex;
+  gap: 15px;
+  border-bottom: 1px solid #4c566a;
+}
+
+nav a {
+  text-decoration: none;
+  color: #88c0d0; /* Accent color inspired by Linux themes */
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #81a1c1;
+}
+
+h2 {
+  color: #eceff4; /* Brighter for headings */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #2e3440;
+  border: 1px solid #4c566a;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #4c566a;
+  text-align: left;
+}
+
+th {
+  background-color: #4c566a;
+  color: #eceff4;
+}
+
+td {
+  color: #d8dee9;
+}
+
+button {
+  background-color: #5e81ac; /* Button background */
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: #eceff4;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #81a1c1;
+}
+
+/* Form styling */
+form {
+  background-color: #3b4252;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  color: #d8dee9;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #4c566a;
+  border-radius: 4px;
+  background-color: #2e3440;
+  color: #eceff4;
+}
+
+input:focus {
+  outline: none;
+  border-color: #81a1c1;
+}
+
+button[type="submit"] {
+  width: 100%;
+}
+
+/* Schedule and settings sections */
+.schedule-container,
+.settings-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.container {
+  padding: 20px;
+  margin: auto;
+  max-width: 800px;
+}
+
+footer {
+  text-align: center;
+  padding: 10px;
+  background-color: #3b4252;
+  border-top: 1px solid #4c566a;
+  color: #d8dee9;
+  margin-top: 20px;
+}

@@ -24,3 +24,7 @@ go.work.sum
 # env file
 .env
 temp.db
+
+build/bin
+node_modules
+frontend/dist
