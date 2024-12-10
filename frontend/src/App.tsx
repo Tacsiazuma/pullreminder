@@ -37,7 +37,7 @@ function App() {
     return (
         <Router>
             <nav>
-                <Link to="/">Repositories</Link> | <Link to="/repos">Repositories</Link> | <Link to="/add-repository">Add Repository</Link> |{' '}
+                <Link to="/">Pull requests</Link> | <Link to="/repos">Repositories</Link> | <Link to="/add-repository">Add Repository</Link> |{' '}
                 <Link to="/schedule">Set Schedule</Link> | <Link to="/settings">Settings</Link>
             </nav>
             <Routes>
@@ -73,7 +73,7 @@ function App() {
                     element={
                         <SettingsForm
                             onSubmit={(settings) => console.log('Save Settings:', settings)}
-                            initialSettings={{ username: '' }}
+                            initialSettings={{ username: '', includeConflicting: true, includeDraft: false }}
                         />
                     }
                 />

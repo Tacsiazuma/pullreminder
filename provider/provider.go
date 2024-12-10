@@ -68,6 +68,12 @@ func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, own
 		} else {
 			assignee = *pr.Assignee.Login
 		}
+		var mergeable bool
+		if details.Mergeable == nil || !*details.Mergeable {
+			mergeable = false
+		} else {
+			mergeable = true
+		}
 		target = append(target, &contract.Pullrequest{
 			Number:      *pr.Number,
 			URL:         *pr.HTMLURL,
@@ -76,7 +82,7 @@ func (f *GithubProvider) mapToPR(ctx context.Context, client *github.Client, own
 			Opened:      pr.CreatedAt.Time,
 			Assignee:    assignee,
 			Description: description,
-			Mergeable:   *details.Mergeable,
+			Mergeable:   mergeable,
 			Reviewers:   MapReviewers(pr.RequestedReviewers),
 			Reviews:     MapReviews(reviews),
 		})

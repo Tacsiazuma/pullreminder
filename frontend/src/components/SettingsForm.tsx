@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 
 interface Settings {
+    includeDraft: boolean;
+    includeConflicting: boolean;
     username: string;
 }
 
@@ -10,7 +12,7 @@ interface SettingsFormProps {
 }
 
 const SettingsForm: React.FC<SettingsFormProps> = ({ onSubmit, initialSettings }) => {
-    const [settings, setSettings] = useState<Settings>(initialSettings || { username: '' });
+    const [settings, setSettings] = useState<Settings>(initialSettings || { username: '', includeDraft: false, includeConflicting: false });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
         setSettings({ ...settings, [e.target.name]: e.target.value });

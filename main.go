@@ -18,7 +18,7 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "pullreminder",
-		Width:  500,
+		Width:  600,
 		Height: 768,
 		AssetServer: &assetserver.Options{
 			Assets: assets,

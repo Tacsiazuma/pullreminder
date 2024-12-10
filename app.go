@@ -31,6 +31,8 @@ func NewApp() *App {
 	return &App{}
 }
 
+var db *sql.DB
+
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
@@ -39,11 +41,11 @@ func (a *App) startup(ctx context.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := sql.Open("sqlite3", filepath.Join(configpath, "db.sqlite"))
+	db, err = sql.Open("sqlite3", filepath.Join(configpath, "db.sqlite"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	a.service = s.New(p.NewGithubProvider(os.Getenv("GITHUB_TOKEN")), st.NewSqliteStore(db))
+	a.service = s.NewService(p.NewGithubProvider(os.Getenv("GITHUB_TOKEN")), st.NewSqliteStore(db))
 	a.ctx = ctx
 	s, err := gocron.NewScheduler()
 	if err != nil {
@@ -84,6 +86,7 @@ func (a *App) UpdateSchedule(cron string) {
 
 func (a *App) OnShutdown(ctx context.Context) {
 	_ = a.scheduler.Shutdown()
+	db.Close()
 }
 
 // repos returns the list of repositories

@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-    c "tacsiazuma/pullreminder/contract"
 	"github.com/stretchr/testify/assert"
+	c "tacsiazuma/pullreminder/contract"
 )
 
 func TestSqliteStore(t *testing.T) {
@@ -40,6 +40,19 @@ func TestSqliteStore(t *testing.T) {
 			repos, err := sut.Repositories()
 			assert.Nil(t, err, "Should not return error")
 			assert.Equal(t, repo, repos[0], "Should return added repos")
+		})
+	})
+	t.Run("settings", func(t *testing.T) {
+		t.Run("can save settings", func(t *testing.T) {
+			err := sut.SaveSettings(&c.Settings{ExcludeDraft: true, ExcludeConflicting: true})
+			assert.Nil(t, err, "Should not return error")
+		})
+		t.Run("can get settings", func(t *testing.T) {
+			expected := &c.Settings{ExcludeDraft: true, ExcludeConflicting: true}
+			err := sut.SaveSettings(expected)
+            settings, err := sut.GetSettings()
+			assert.Nil(t, err, "Should not return error")
+            assert.Equal(t, expected, settings, "Should return same settings")
 		})
 	})
 	t.Run("credentials", func(t *testing.T) {

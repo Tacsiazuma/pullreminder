@@ -27,6 +27,7 @@ export namespace contract {
 	    Reviewers: string[];
 	    Description: string;
 	    Mergeable: boolean;
+	    Draft: boolean;
 	    Reviews: Review[];
 	
 	    static createFrom(source: any = {}) {
@@ -44,6 +45,7 @@ export namespace contract {
 	        this.Reviewers = source["Reviewers"];
 	        this.Description = source["Description"];
 	        this.Mergeable = source["Mergeable"];
+	        this.Draft = source["Draft"];
 	        this.Reviews = this.convertValues(source["Reviews"], Review);
 	    }
 	

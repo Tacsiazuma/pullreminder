@@ -6,20 +6,18 @@ import (
 )
 
 type Service struct {
-	store    Store
-	provider Provider
+	store              Store
+	provider           Provider
+	excludeConflicting bool
+	excludeDraft       bool
 }
 
-type FakeStore struct {
-	repositories []*c.Repository
-	credentails  map[string]string
-}
-
-func New(provider Provider, store Store) *Service {
-	return &Service{
+func NewService(provider Provider, store Store) *Service {
+	service := &Service{
 		store:    store,
 		provider: provider,
 	}
+	return service
 }
 
 func (s *Service) NeedsAttention(ctx context.Context) ([]*c.Pullrequest, error) {
@@ -50,7 +48,10 @@ func (s *Service) NeedsAttention(ctx context.Context) ([]*c.Pullrequest, error) 
 func (s *Service) filter(origin []*c.Pullrequest) []*c.Pullrequest {
 	var result []*c.Pullrequest
 	for _, pr := range origin {
-		if !pr.Mergeable {
+		if s.excludeConflicting && !pr.Mergeable {
+			continue
+		}
+		if s.excludeDraft && pr.Draft {
 			continue
 		}
 		result = append(result, pr)
@@ -92,12 +93,29 @@ func (s *Service) AddRepository(repo *c.Repository) error {
 	return s.store.AddRepository(repo)
 }
 
+func (s *Service) SaveSettings(settings *c.Settings) error {
+	s.excludeConflicting = settings.ExcludeConflicting
+	s.excludeDraft = settings.ExcludeDraft
+	return s.store.SaveSettings(settings)
+}
+
+func (s *Service) GetSettings() (*c.Settings, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	s.excludeConflicting = settings.ExcludeConflicting
+	s.excludeDraft = settings.ExcludeDraft
+	return settings, nil
+}
 
 type Store interface {
 	AddRepository(repo *c.Repository) error
 	AddCredentials(provider, token string) error
 	Repositories() ([]*c.Repository, error)
 	Credentials() (map[string]string, error)
+	SaveSettings(settings *c.Settings) error
+	GetSettings() (*c.Settings, error)
 }
 
 type Provider interface {

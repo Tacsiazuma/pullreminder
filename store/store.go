@@ -2,10 +2,11 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"strings"
-    c "tacsiazuma/pullreminder/contract"
+	c "tacsiazuma/pullreminder/contract"
 )
 
 type SqliteStore struct {
@@ -18,6 +19,10 @@ func NewSqliteStore(db *sql.DB) *SqliteStore {
 		log.Fatal(err)
 	}
 	_, err = db.Exec("create table if not exists credentials (provider varchar, token varchar)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = db.Exec("create table if not exists settings (key varchar, value text)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,6 +62,33 @@ func (s *SqliteStore) Credentials() (map[string]string, error) {
 		creds[provider] = token
 	}
 	return creds, nil
+}
+
+func (s *SqliteStore) SaveSettings(settings *c.Settings) error {
+	marshalled, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec("INSERT INTO settings (key, value) VALUES (?,?)", "settings", marshalled)
+	return err
+}
+
+func (s *SqliteStore) GetSettings() (*c.Settings, error) {
+	rows, err := s.db.Query("SELECT value FROM settings where key = 'settings'")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	settings := &c.Settings{}
+	for rows.Next() {
+		var marshalled string
+		err = rows.Scan(&marshalled)
+		if err != nil {
+			return nil, err
+		}
+		json.Unmarshal([]byte(marshalled), settings)
+	}
+	return settings, nil
 }
 
 func (s *SqliteStore) Repositories() ([]*c.Repository, error) {

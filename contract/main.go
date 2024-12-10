@@ -15,6 +15,7 @@ type Pullrequest struct {
 	Reviewers   []string
 	Description string
 	Mergeable   bool
+	Draft       bool
 	Reviews     []Review
 }
 
@@ -52,4 +53,9 @@ func (r *Repository) Equal(other *Repository) bool {
 
 func (r *Repository) ToString() string {
 	return r.Name + r.Owner + r.Provider
+}
+
+type Settings struct {
+	ExcludeDraft       bool
+	ExcludeConflicting bool
 }

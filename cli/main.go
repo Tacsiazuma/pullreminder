@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	service := service.New(provider.NewGithubProvider(os.Getenv("GITHUB_TOKEN")), store.NewSqliteStore(db))
+	service := service.NewService(provider.NewGithubProvider(os.Getenv("GITHUB_TOKEN")), store.NewSqliteStore(db))
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{
