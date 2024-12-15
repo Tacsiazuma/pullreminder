@@ -84,6 +84,16 @@ func (a *App) UpdateSchedule(cron string) {
 	a.scheduler.Start()
 }
 
+func (a *App) UpdateSettings(settings *c.Settings) error {
+	runtime.LogPrint(a.ctx, "saving settings")
+	return a.service.SaveSettings(settings)
+}
+
+func (a *App) GetSettings() (*c.Settings, error) {
+	runtime.LogPrint(a.ctx, "getting settings")
+	return a.service.GetSettings()
+}
+
 func (a *App) OnShutdown(ctx context.Context) {
 	_ = a.scheduler.Shutdown()
 	db.Close()

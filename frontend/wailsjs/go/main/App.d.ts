@@ -7,8 +7,12 @@ export function AddRepo(arg1:contract.Repository):Promise<void>;
 
 export function CheckPRs():Promise<Array<contract.Pullrequest>>;
 
+export function GetSettings():Promise<contract.Settings>;
+
 export function OnShutdown(arg1:context.Context):Promise<void>;
 
 export function Repos():Promise<Array<contract.Repository>>;
 
 export function UpdateSchedule(arg1:string):Promise<void>;
+
+export function UpdateSettings(arg1:contract.Settings):Promise<void>;

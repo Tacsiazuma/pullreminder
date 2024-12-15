@@ -22,7 +22,7 @@ func NewSqliteStore(db *sql.DB) *SqliteStore {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = db.Exec("create table if not exists settings (key varchar, value text)")
+	_, err = db.Exec("create table if not exists settings (key varchar, value text, primary key (key))")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func (s *SqliteStore) SaveSettings(settings *c.Settings) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.db.Exec("INSERT INTO settings (key, value) VALUES (?,?)", "settings", marshalled)
+	_, err = s.db.Exec("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", "settings", marshalled)
 	return err
 }
 
@@ -86,7 +86,10 @@ func (s *SqliteStore) GetSettings() (*c.Settings, error) {
 		if err != nil {
 			return nil, err
 		}
-		json.Unmarshal([]byte(marshalled), settings)
+		err = json.Unmarshal([]byte(marshalled), settings)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return settings, nil
 }

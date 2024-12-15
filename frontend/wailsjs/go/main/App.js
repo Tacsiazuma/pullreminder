@@ -10,6 +10,10 @@ export function CheckPRs() {
   return window['go']['main']['App']['CheckPRs']();
 }
 
+export function GetSettings() {
+  return window['go']['main']['App']['GetSettings']();
+}
+
 export function OnShutdown(arg1) {
   return window['go']['main']['App']['OnShutdown'](arg1);
 }
@@ -20,4 +24,8 @@ export function Repos() {
 
 export function UpdateSchedule(arg1) {
   return window['go']['main']['App']['UpdateSchedule'](arg1);
+}
+
+export function UpdateSettings(arg1) {
+  return window['go']['main']['App']['UpdateSettings'](arg1);
 }

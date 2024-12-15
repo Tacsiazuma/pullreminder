@@ -58,4 +58,5 @@ func (r *Repository) ToString() string {
 type Settings struct {
 	ExcludeDraft       bool
 	ExcludeConflicting bool
+	Username           string
 }

@@ -83,6 +83,23 @@ export namespace contract {
 	        this.Provider = source["Provider"];
 	    }
 	}
+	
+	export class Settings {
+	    ExcludeDraft: boolean;
+	    ExcludeConflicting: boolean;
+	    Username: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Settings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ExcludeDraft = source["ExcludeDraft"];
+	        this.ExcludeConflicting = source["ExcludeConflicting"];
+	        this.Username = source["Username"];
+	    }
+	}
 
 }
 
