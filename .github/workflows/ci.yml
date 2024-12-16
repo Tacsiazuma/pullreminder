@@ -1,6 +1,5 @@
-name: Go Build and Test
+name: Build and Test
 
-# Trigger the workflow on push to any branch
 on:
   push:
     branches:
@@ -19,6 +18,12 @@ jobs:
       with:
         go-version: '1.23'  # You can specify the Go version here
 
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
     - name: Cache Go modules
       uses: actions/cache@v3
       with:
@@ -28,13 +33,15 @@ jobs:
           ${{ runner.os }}-go-mod-
 
     - name: Install dependencies
-      run: go mod tidy  # This will download the dependencies
+      run: go mod tidy  
 
-    - name: Build the Go project
-      run: go build -v ./...  # This will build your Go code
-
-    - name: Run tests
-      run: go test -v ./...  # This will run your Go tests
+    - name: Run go tests
+      run: go test -v ./...
       env:
         GITHUB_TOKEN: ${{ secrets.GHA_TOKEN }}
 
+    - name: Install frontend dependencies
+      run: npm ci
+
+    - name: Run jest tests
+      run: npm test
