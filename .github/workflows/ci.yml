@@ -42,6 +42,8 @@ jobs:
 
     - name: Install frontend dependencies
       run: npm ci
+      working-directory: ./frontend
 
     - name: Run jest tests
       run: npm test
+      working-directory: ./frontend
